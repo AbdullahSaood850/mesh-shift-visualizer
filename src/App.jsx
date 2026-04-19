@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { motion } from "framer-motion";
 import ControlPanel from "./components/ControlPanel";
 import ComplexityPanel from "./components/ComplexityPanel";
 import MeshGrid from "./components/MeshGrid";
@@ -8,9 +9,9 @@ const DEFAULT_P = 16;
 const DEFAULT_Q = 5;
 
 const STEP_COPY = {
-  [STEP_KEYS.INITIAL]: "START",
-  [STEP_KEYS.STAGE_1]: "STAGE 1 ROW SHIFT",
-  [STEP_KEYS.FINAL]: "STAGE 2 COLUMN SHIFT",
+  [STEP_KEYS.INITIAL]: "READY",
+  [STEP_KEYS.STAGE_1]: "STAGE 1 DONE",
+  [STEP_KEYS.FINAL]: "STAGE 2 DONE",
 };
 
 const STEP_SEQUENCE = [STEP_KEYS.INITIAL, STEP_KEYS.STAGE_1, STEP_KEYS.FINAL];
@@ -29,54 +30,27 @@ export default function App() {
     if (!validation.isValid) {
       return null;
     }
-
     return getShiftStates(p, q);
   }, [p, q, validation.isValid]);
 
-  function handlePChange(event) {
-    setPInput(event.target.value);
-  }
-
-  function handleQChange(event) {
-    setQInput(event.target.value);
-  }
-
-  function handleStepChange(stepKey) {
-    setCurrentStep(stepKey);
-    setIsPlaying(false);
-  }
+  function handlePChange(event) { setPInput(event.target.value); }
+  function handleQChange(event) { setQInput(event.target.value); }
+  function handleStepChange(stepKey) { setCurrentStep(stepKey); setIsPlaying(false); }
 
   function handleNextStep() {
     setIsPlaying(false);
     setCurrentStep((previousStep) => {
       const previousIndex = STEP_SEQUENCE.indexOf(previousStep);
-      if (previousIndex < 0 || previousIndex >= STEP_SEQUENCE.length - 1) {
-        return STEP_KEYS.FINAL;
-      }
-
-      return STEP_SEQUENCE[previousIndex + 1];
+      return previousIndex < 0 || previousIndex >= STEP_SEQUENCE.length - 1 ? STEP_KEYS.FINAL : STEP_SEQUENCE[previousIndex + 1];
     });
   }
 
-  function handleReset() {
-    setCurrentStep(STEP_KEYS.INITIAL);
-    setIsPlaying(false);
-  }
+  function handleReset() { setCurrentStep(STEP_KEYS.INITIAL); setIsPlaying(false); }
 
   function handleTogglePlay() {
-    if (!validation.isValid) {
-      return;
-    }
-
-    if (isPlaying) {
-      setIsPlaying(false);
-      return;
-    }
-
-    if (currentStep === STEP_KEYS.FINAL) {
-      setCurrentStep(STEP_KEYS.INITIAL);
-    }
-
+    if (!validation.isValid) return;
+    if (isPlaying) return setIsPlaying(false);
+    if (currentStep === STEP_KEYS.FINAL) setCurrentStep(STEP_KEYS.INITIAL);
     setIsPlaying(true);
   }
 
@@ -86,104 +60,69 @@ export default function App() {
   }, [pInput, qInput]);
 
   useEffect(() => {
-    if (!isPlaying || !validation.isValid) {
-      return undefined;
-    }
-
+    if (!isPlaying || !validation.isValid) return;
     const timer = setInterval(() => {
       setCurrentStep((previousStep) => {
         const previousIndex = STEP_SEQUENCE.indexOf(previousStep);
-
         if (previousIndex >= STEP_SEQUENCE.length - 1) {
           setIsPlaying(false);
           return STEP_KEYS.FINAL;
         }
-
         return STEP_SEQUENCE[previousIndex + 1];
       });
     }, 1200);
-
     return () => clearInterval(timer);
   }, [isPlaying, validation.isValid]);
 
   return (
-    <main className="min-h-screen bg-white bg-[radial-gradient(#d1d5db_1px,transparent_1px)] [background-size:16px_16px] px-4 py-12 text-black sm:px-6 lg:px-10">
-      <div className="mx-auto max-w-7xl">
-        <header className="mb-12 border-4 border-black bg-white p-8 shadow-[8px_8px_0_0_#000] lg:p-12">
-          <p className="text-sm font-black uppercase tracking-widest text-black border-b-4 border-black pb-4 mb-4">
-            Data Routine
-          </p>
-          <h1 className="max-w-4xl text-5xl font-black uppercase leading-none tracking-tighter text-black lg:text-7xl">
-            Mesh Circular Shift
-          </h1>
-          <p className="mt-8 max-w-2xl text-xl font-bold text-black border-l-4 border-black pl-6">
-            Stage 1: Row shift of q mod sqrt(p).
-            <br />
-            Stage 2: Column shift of floor(q / sqrt(p)).
-          </p>
-        </header>
+    <main className="min-h-screen bg-[#fdfdf5] text-black font-sans p-4 sm:p-6 lg:p-8 bg-[radial-gradient(#cbd5e1_2px,transparent_2px)] [background-size:32px_32px]">
+      <div className="mx-auto max-w-[1200px]">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-12 gap-4 lg:gap-6 auto-rows-min"
+        >
+          {/* Header - span 9 */}
+          <header className="col-span-1 md:col-span-4 lg:col-span-9 rounded-2xl border-[3px] border-black bg-yellow-400 p-6 sm:p-8 shadow-[6px_6px_0_0_#000] flex flex-col justify-center transition-transform hover:-translate-y-1 hover:shadow-[8px_8px_0_0_#000]">
+            <div className="flex items-center gap-3 mb-2">
+              <span className="w-4 h-4 bg-red-500 rounded-full border-2 border-black drop-shadow-[2px_2px_0_0_#000]"></span>
+              <span className="w-4 h-4 bg-blue-500 rounded-full border-2 border-black drop-shadow-[2px_2px_0_0_#000]"></span>
+              <p className="text-xs font-black uppercase tracking-widest text-black/80 ml-2">Data Routine</p>
+            </div>
+            <h1 className="text-4xl sm:text-5xl lg:text-7xl font-black uppercase tracking-tighter text-black leading-none drop-shadow-[2px_2px_0_0_#fff]">
+              Mesh Shift Visualization
+            </h1>
+          </header>
 
-        <section className="grid gap-12 lg:grid-cols-[400px_1fr]">
-          <ControlPanel
-            p={pInput}
-            q={qInput}
-            onPChange={handlePChange}
-            onQChange={handleQChange}
-            validation={validation}
-            currentStep={currentStep}
-            onStepChange={handleStepChange}
-            isPlaying={isPlaying}
-            onTogglePlay={handleTogglePlay}
-            onNextStep={handleNextStep}
-            onReset={handleReset}
-          />
+          {/* Status Box - span 3 */}
+          <div className="col-span-1 md:col-span-4 lg:col-span-3 rounded-2xl border-[3px] border-black bg-white p-6 shadow-[6px_6px_0_0_#000] flex flex-col items-center justify-center text-center transition-transform hover:-translate-y-1 hover:shadow-[8px_8px_0_0_#000]">
+             <p className="text-sm font-black uppercase tracking-wider text-black/60 mb-2">Current State</p>
+             <h2 className="text-3xl sm:text-4xl font-black uppercase text-red-500 drop-shadow-[2px_2px_0_0_#000]">{STEP_COPY[currentStep]}</h2>
+             {validation.isValid && isPlaying && (
+               <span className="mt-3 bg-blue-500 text-white font-black text-xs px-3 py-1 border-2 border-black rounded shadow-[2px_2px_0_0_#000]">AUTO-PLAYING</span>
+             )}
+          </div>
 
-          <div className="space-y-12">
-            <article className="border-4 border-black bg-gray-100 p-8 shadow-[8px_8px_0_0_#000] lg:p-10">
-              <div className="flex flex-wrap items-center justify-between gap-6 border-b-4 border-black pb-6">
-                <div>
-                  <p className="text-sm font-black uppercase tracking-widest text-black">
-                    State
-                  </p>
-                  <h2 className="mt-2 text-4xl font-black uppercase tracking-tighter text-black">
-                    {STEP_COPY[currentStep]}
-                  </h2>
-                </div>
-                {validation.isValid ? (
-                  <div className="flex flex-wrap items-center gap-4">
-                    <span className="border-4 border-black bg-white px-5 py-2 text-base font-black uppercase text-black shadow-[4px_4px_0_0_#000]">
-                      p={p} | q={q}
-                    </span>
-                    {isPlaying ? (
-                      <span className="border-4 border-black bg-black px-5 py-2 text-base font-black uppercase text-white shadow-[4px_4px_0_0_#000]">
-                        AUTO-PLAY
-                      </span>
-                    ) : null}
-                  </div>
-                ) : (
-                  <span className="border-4 border-black bg-red-100 px-5 py-2 text-base font-black uppercase text-red-700 shadow-[4px_4px_0_0_#b91c1c]">
-                    WAITING
-                  </span>
-                )}
-              </div>
-
-              <div className="mt-10">
-                <MeshGrid
-                  validation={validation}
-                  shiftStates={shiftStates}
-                  currentStep={currentStep}
-                />
-              </div>
-            </article>
-
-            <ComplexityPanel
-              p={p}
-              q={q}
-              validation={validation}
-              shiftStates={shiftStates}
+          {/* Control Panel - span 3 */}
+          <div className="col-span-1 md:col-span-2 lg:col-span-3 flex flex-col gap-4">
+            <ControlPanel
+              p={pInput} q={qInput}
+              onPChange={handlePChange} onQChange={handleQChange}
+              validation={validation} currentStep={currentStep} onStepChange={handleStepChange}
+              isPlaying={isPlaying} onTogglePlay={handleTogglePlay} onNextStep={handleNextStep} onReset={handleReset}
             />
           </div>
-        </section>
+
+          {/* Mesh Grid - span 6 */}
+          <div className="col-span-1 md:col-span-2 lg:col-span-6 flex flex-col gap-4 min-h-[500px]">
+            <MeshGrid validation={validation} shiftStates={shiftStates} currentStep={currentStep} />
+          </div>
+
+          {/* Complexity - span 3 */}
+          <div className="col-span-1 md:col-span-4 lg:col-span-3 flex flex-col gap-4">
+            <ComplexityPanel p={p} q={q} validation={validation} shiftStates={shiftStates} />
+          </div>
+        </motion.div>
       </div>
     </main>
   );

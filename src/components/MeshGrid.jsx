@@ -1,11 +1,5 @@
-import { LayoutGroup, motion } from "framer-motion";
+import { LayoutGroup, motion, AnimatePresence } from "framer-motion";
 import { STEP_KEYS } from "../utils/shiftLogic";
-
-const STAGE_LABELS = {
-  [STEP_KEYS.INITIAL]: "START",
-  [STEP_KEYS.STAGE_1]: "STAGE 1 ROW SHIFT",
-  [STEP_KEYS.FINAL]: "STAGE 2 COLUMN SHIFT",
-};
 
 const STAGE_HINTS = {
   [STEP_KEYS.INITIAL]: "Data is stationary before movement.",
@@ -16,9 +10,9 @@ const STAGE_HINTS = {
 export default function MeshGrid({ validation, shiftStates, currentStep }) {
   if (!validation.isValid || !shiftStates) {
     return (
-      <div className="border-4 border-black bg-gray-100 p-5 shadow-[4px_4px_0_0_#000]">
-        <p className="text-base font-black uppercase text-black">
-          Enter valid inputs to render the mesh.
+      <div className="h-full rounded-2xl border-[3px] border-black bg-white p-5 shadow-[6px_6px_0_0_#000] flex items-center justify-center">
+        <p className="text-sm font-black uppercase text-black/60 bg-gray-100 border-[3px] border-black px-6 py-4 shadow-[4px_4px_0_0_#000] transform -rotate-1">
+          Awaiting Valid Input
         </p>
       </div>
     );
@@ -34,60 +28,52 @@ export default function MeshGrid({ validation, shiftStates, currentStep }) {
 
   const visibleState = stateByStep[currentStep] ?? initialState;
   const movementDirection = getMovementDirection(currentStep);
+
   const tokenClassName =
     currentStep === STEP_KEYS.STAGE_1
-      ? "bg-gray-300 text-black border-4 border-black shadow-[2px_2px_0_0_#000]"
+      ? "bg-blue-400 text-black border-[3px] border-black shadow-[2px_2px_0_0_#000]"
       : currentStep === STEP_KEYS.FINAL
-        ? "bg-gray-400 text-black border-4 border-black shadow-[2px_2px_0_0_#000]"
-        : "bg-black text-white border-4 border-black shadow-[2px_2px_0_0_#000]";
+      ? "bg-red-400 text-black border-[3px] border-black shadow-[2px_2px_0_0_#000]"
+      : "bg-yellow-400 text-black border-[3px] border-black shadow-[2px_2px_0_0_#000]";
 
   return (
-    <div className="border-4 border-black bg-gray-100 p-5 shadow-[8px_8px_0_0_#000]">
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-4 border-b-4 border-black pb-4">
+    <div className="h-full rounded-2xl border-[3px] border-black bg-white p-5 sm:p-6 shadow-[6px_6px_0_0_#000] flex flex-col transition-transform hover:-translate-y-1 hover:shadow-[8px_8px_0_0_#000]">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-4 border-b-[3px] border-black pb-4">
         <div>
-          <p className="text-sm font-black uppercase tracking-widest text-black">
-            Mesh Grid
-          </p>
-          <h3 className="text-2xl font-black uppercase tracking-tighter text-black">
-            {STAGE_LABELS[currentStep]}
-          </h3>
+          <p className="text-xs font-black uppercase tracking-widest text-black/60">Mesh Grid</p>
+          <h3 className="mt-1 text-xl sm:text-2xl font-black uppercase tracking-tighter text-black">{STAGE_HINTS[currentStep]}</h3>
         </div>
-        <span className="border-4 border-black bg-white px-4 py-2 text-base font-black text-black shadow-[4px_4px_0_0_#000]">
-          {meshDimension} x {meshDimension}
+        <span className="rounded-xl flex items-center justify-center border-[3px] border-black bg-black text-white px-4 py-2 text-sm font-black tracking-widest shadow-[4px_4px_0_0_#f87171] transform rotate-1">
+          {meshDimension} × {meshDimension}
         </span>
       </div>
 
-      <p className="mb-6 text-base font-bold uppercase text-black border-l-4 border-black pl-4">
-        {STAGE_HINTS[currentStep]}
-      </p>
+      <DirectionIndicator direction={movementDirection} />
 
-      <DirectionIndicator direction={movementDirection} meshDimension={meshDimension} />
-
-      <div className="mx-auto w-full">
-        <LayoutGroup id="mesh-data-flow">
-          <div
-            className="grid gap-4"
-            style={{ gridTemplateColumns: `repeat(${meshDimension}, minmax(0, 1fr))` }}
-          >
+      <div className="flex-1 flex items-center justify-center p-2 sm:p-4 overflow-hidden">
+        <LayoutGroup id="mesh-flow">
+          <div className="grid gap-2 sm:gap-3 w-full max-w-full" style={{ gridTemplateColumns: `repeat(${meshDimension}, minmax(0, 1fr))` }}>
             {visibleState.map((dataValue, nodeIndex) => (
-              <div
+              <motion.div
                 key={nodeIndex}
-                className="border-4 border-black bg-white px-2 py-4 text-center shadow-[4px_4px_0_0_#000] flex flex-col items-center justify-center transition-all duration-200 hover:-translate-y-1 hover:shadow-[6px_6px_0_0_#000]"
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.3, delay: nodeIndex * 0.02 }}
+                className="aspect-square rounded-xl border-[3px] border-black bg-gray-50 flex flex-col items-center justify-center shadow-[2px_2px_0_0_#000] relative overflow-hidden"
               >
-                <p className="text-xs font-black uppercase tracking-widest text-gray-500 mb-2">
+                <p className="absolute top-1 left-1.5 text-[9px] font-black uppercase tracking-widest text-black/40">
                   N{nodeIndex}
                 </p>
-
-                <div className="flex justify-center w-full">
+                <div className="flex items-center justify-center mt-2">
                   <motion.div
-                    layoutId={`data-token-${dataValue}`}
-                    transition={{ type: "spring", stiffness: 560, damping: 34 }}
-                    className={`px-3 py-2 text-xl font-black ${tokenClassName}`}
+                    layoutId={`data-value-${dataValue}`}
+                    transition={{ type: "spring", stiffness: 450, damping: 25, mass: 1 }}
+                    className={`px-2 py-1 sm:px-3 sm:py-2 rounded-lg text-xs sm:text-base font-black ${tokenClassName} z-10 flex items-center justify-center`}
                   >
                     D{dataValue}
                   </motion.div>
                 </div>
-              </div>
+              </motion.div>
             ))}
           </div>
         </LayoutGroup>
@@ -96,64 +82,33 @@ export default function MeshGrid({ validation, shiftStates, currentStep }) {
   );
 }
 
-function DirectionIndicator({ direction, meshDimension }) {
+function DirectionIndicator({ direction }) {
   if (!direction) {
     return (
-      <div className="mb-6 border-4 border-black bg-white px-4 py-3 text-base font-black uppercase text-black shadow-[4px_4px_0_0_#000]">
-        Direction indicator activates during stages.
+      <div className="mb-4 rounded-xl border-[3px] border-black bg-gray-100 px-4 py-3 text-xs sm:text-sm font-black uppercase text-black/50 border-dashed">
+        Direction activates during stages.
       </div>
     );
   }
-
-  const arrowCount = Math.max(3, meshDimension);
-
   return (
-    <motion.div
-      key={direction.axis}
-      initial={{ opacity: 0, y: -8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.25 }}
-      className={`mb-6 border-4 border-black px-4 py-4 shadow-[4px_4px_0_0_#000] ${direction.wrapperClass}`}
-    >
-      <p className="text-base font-black uppercase text-black mb-2">{direction.label}</p>
-
-      {direction.axis === "x" ? (
-        <div className="flex flex-wrap items-center gap-4 text-2xl">
-          {Array.from({ length: arrowCount }).map((_, index) => (
-            <span key={index} className="font-black text-black">
-              →
-            </span>
-          ))}
-        </div>
-      ) : (
-        <div className="flex max-h-24 flex-col gap-2 overflow-hidden text-2xl">
-          {Array.from({ length: arrowCount }).map((_, index) => (
-            <span key={index} className="font-black text-black leading-none">
-              ↓
-            </span>
-          ))}
-        </div>
-      )}
-    </motion.div>
+    <AnimatePresence mode="popLayout">
+      <motion.div
+        key={direction.axis}
+        initial={{ opacity: 0, height: 0, overflow: 'hidden' }}
+        animate={{ opacity: 1, height: 'auto' }}
+        exit={{ opacity: 0, height: 0 }}
+        transition={{ duration: 0.2 }}
+        className={`mb-4 rounded-xl border-[3px] border-black px-4 py-3 shadow-[4px_4px_0_0_#000] ${direction.wrapperClass} flex items-center justify-between gap-3`}
+      >
+        <p className="text-xs sm:text-sm font-black uppercase text-black">{direction.label}</p>
+        <span className="text-sm font-black uppercase drop-shadow-[2px_2px_0_0_#fff]">{direction.arrow}</span>
+      </motion.div>
+    </AnimatePresence>
   );
 }
 
 function getMovementDirection(currentStep) {
-  if (currentStep === STEP_KEYS.STAGE_1) {
-    return {
-      axis: "x",
-      label: "HORIZONTAL ROW SHIFT",
-      wrapperClass: "bg-white",
-    };
-  }
-
-  if (currentStep === STEP_KEYS.FINAL) {
-    return {
-      axis: "y",
-      label: "VERTICAL COLUMN SHIFT",
-      wrapperClass: "bg-white",
-    };
-  }
-
+  if (currentStep === STEP_KEYS.STAGE_1) return { axis: "x", label: "ROW SHIFT", arrow: "HORIZONTAL →", wrapperClass: "bg-blue-400" };
+  if (currentStep === STEP_KEYS.FINAL) return { axis: "y", label: "COLUMN SHIFT", arrow: "VERTICAL ↓", wrapperClass: "bg-red-400" };
   return null;
 }

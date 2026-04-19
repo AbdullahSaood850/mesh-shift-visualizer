@@ -4,7 +4,7 @@ Interactive React + Vite app for visualizing circular $q$-shift routing on a 2D 
 
 ## Live Deployment
 
-Vercel URL: https://mesh-shift-visualizer-virid-xi.vercel.app/
+Vercel URL: https://mesh-shift-visualizer-five-theta.vercel.app/
 
 ## Overview
 
